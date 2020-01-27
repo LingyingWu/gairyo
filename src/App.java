@@ -168,33 +168,33 @@ public class App {
 
 		// 希望者不足
 		if (cand_morning <= vac_morning) {
-			if (cand_h.size() <= 2) {
+			if (cand_h.size() <= vacancy.get("H")) {
 				System.out.println("h < 3");
 				for (int no : cand_h) {
-					boolean done = employees.get(no).scheduleShift(date, 'H');
+					boolean done = employees.get(no).schedule(date, 'H');
 					vac_morning -= done ? 1 : 0;
 				}
 				while (vac_morning > 0 && cand_b.size() > 0) {
 					int no = getRandomNum(cand_b);
-					boolean done = employees.get(no).scheduleShift(date, 'B');
+					boolean done = employees.get(no).schedule(date, 'B');
 					vac_morning -= done ? 1 : 0;
 				}
-			} else if (cand_b.size() < 6) {
+			} else if (cand_b.size() < vacancy.get("B")) {
 				System.out.println("b < 6");
 				for (int no : cand_b) {
-					boolean done = employees.get(no).scheduleShift(date, 'B');
+					boolean done = employees.get(no).schedule(date, 'B');
 					vac_morning -= done ? 1 : 0;
 				}
 				while (vac_morning > 0 && cand_h.size() > 0) {
 					int no = getRandomNum(cand_h);
-					boolean done = employees.get(no).scheduleShift(date, 'H');
+					boolean done = employees.get(no).schedule(date, 'H');
 					vac_morning -= done ? 1 : 0;
 				}
 			}
 		} else {
 			if (!cand_a.isEmpty()) {
 				int no = getRandomNum(cand_a);
-				boolean done = employees.get(no).scheduleShift(date, 'A');
+				boolean done = employees.get(no).schedule(date, 'A');
 				if (done) {
 					vac_morning--; // System.out.println(" A-SCHEDULED!! to no." + no);
 					cand_morning--;
@@ -202,36 +202,105 @@ public class App {
 					cand_h.remove(Integer.valueOf(no));
 				}
 			}
+
+			PriorityQueue<Member> pqb = new PriorityQueue<>();
+			PriorityQueue<Member> pqh = new PriorityQueue<>();
+
+			for (int no : cand_h)
+				pqh.add(employees.get(no));
+			for (int no : cand_b)
+				pqb.add(employees.get(no));
+
+			int vac_b = vacancy.get("B");
+			int vac_h = vacancy.get("H");
+			while (vac_morning > 0) {
+				if (vac_b > 0) {
+					boolean done = false;
+					while (!pqb.isEmpty() && !done) {
+						Member member = pqb.remove();
+						done = member.schedule(date, 'B');
+						if (done) {
+							vac_b--;
+							vac_morning--;
+							pqh.remove(member);
+						}
+					}
+				}
+				if (vac_h > 0) {
+					boolean done = false;
+					while (!pqh.isEmpty() && !done) {
+						Member member = pqh.remove();
+						done = member.schedule(date, 'H');
+						if (done) {
+							vac_h--;
+							vac_morning--;
+							pqb.remove(member);
+						}
+					}
+				}
+			}
+			pqh.clear();
+			pqb.clear();
 		}
 
 		// Afternoon
+		List<Integer> cand_c = timetable.getAvailabilityOf(date, 'C');
+		List<Integer> cand_d = timetable.getAvailabilityOf(date, 'D');
+
 		if (cand_afternoon <= vac_afternoon) {
 			// 希望人数 < 定員
-			List<Integer> cand_c = timetable.getAvailabilityOf(date, 'C');
-			List<Integer> cand_d = timetable.getAvailabilityOf(date, 'D');
 			if (cand_c.size() <= vacancy.get("C")) {
 				System.out.println("c <= 2");
 				for (int no : cand_c) {
-					boolean done = employees.get(no).scheduleShift(date, 'C');
+					boolean done = employees.get(no).schedule(date, 'C');
 					vac_afternoon -= done ? 1 : 0;
 				}
 				while (vac_afternoon > 0 && cand_d.size() > 0) {
 					int no = getRandomNum(cand_d);
-					boolean done = employees.get(no).scheduleShift(date, 'D');
+					boolean done = employees.get(no).schedule(date, 'D');
 					vac_afternoon -= done ? 1 : 0;
 				}
 			} else if (cand_d.size() <= vacancy.get("D")) {
 				System.out.println("d <= 4");
 				for (int no : cand_d) {
-					boolean done = employees.get(no).scheduleShift(date, 'D');
+					boolean done = employees.get(no).schedule(date, 'D');
 					vac_afternoon -= done ? 1 : 0;
 				}
 				while (vac_afternoon > 0 && cand_c.size() > 0) {
 					int no = getRandomNum(cand_c);
-					boolean done = employees.get(no).scheduleShift(date, 'C');
+					boolean done = employees.get(no).schedule(date, 'C');
 					vac_afternoon -= done ? 1 : 0;
 				}
 			}
+		} else {
+			PriorityQueue<Member> pq = new PriorityQueue<>();
+
+			for (int no : cand_d)
+				pq.add(employees.get(no));
+			int vac_d = vacancy.get("D");
+			while (vac_afternoon > 0 && vac_d > 0 && !pq.isEmpty()) {
+				Member member = pq.remove();
+				boolean done = member.schedule(date, 'D');
+				if (done) {
+					vac_d--;
+					vac_afternoon--;
+					cand_d.remove(Integer.valueOf(member.no));
+				}
+			}
+			pq.clear();
+
+			for (int no : cand_c)
+				pq.add(employees.get(no));
+			int vac_c = vacancy.get("C");
+			while (vac_afternoon > 0 && vac_c > 0 && !pq.isEmpty()) {
+				Member member = pq.remove();
+				boolean done = member.schedule(date, 'C');
+				if (done) {
+					vac_c--;
+					vac_afternoon--;
+				}
+			}
+			pq.clear();
 		}
 	}
 

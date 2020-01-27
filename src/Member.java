@@ -35,7 +35,7 @@ public class Member implements Comparable<Member> {
 		requestedDays = days;
 	}
 
-	public boolean scheduleShift(int date, char shift) {
+	public boolean schedule(int date, char shift) {
 		// ALL-DAY shift not allowed!!
 		if (scheduledShifts.containsKey(date))
 			return false;
@@ -55,6 +55,7 @@ public class Member implements Comparable<Member> {
 		for (int i = 0; i < days; i++) {
 			sb.append(scheduledShifts.getOrDefault(i, ' ') + ",");
 		}
+		sb.append(requestedDays + ",");
 		sb.append("\n");
 
 		return sb.toString();
@@ -68,6 +69,10 @@ public class Member implements Comparable<Member> {
 	}
 
 	public int compareTo(Member other) {
+		if (this.requestedDays < 6 && other.requestedDays >= 6)
+			return -2; // higher priority
+		else if (this.requestedDays >= 6 && other.requestedDays <= 6)
+			return 2;
 		return this.scheduledDays / this.requestedDays - other.scheduledDays - other.requestedDays;
 	}
 
