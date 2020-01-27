@@ -13,6 +13,8 @@ public class Member implements Comparable<Member> {
 	String[] availability;
 	private int requestedDays;
 	private int scheduledDays;
+	private int minDays = 5;
+	private int maxDays = 15;
 
 	public Map<Integer, Character> scheduledShifts;
 
@@ -22,7 +24,7 @@ public class Member implements Comparable<Member> {
 
 		chineseStaff = false;
 		for (String s : languages) {
-			if (s == "chinese")
+			if (s.equals("chinese"))
 				chineseStaff = true;
 		}
 		reset();
@@ -35,13 +37,37 @@ public class Member implements Comparable<Member> {
 		requestedDays = days;
 	}
 
+	public String getAvailability(int date) {
+		return availability[date];
+	}
+
 	public boolean schedule(int date, char shift) {
-		// ALL-DAY shift not allowed!!
-		if (scheduledShifts.containsKey(date))
+		// System.out.println("******Scheduling date 11: " + no + " shift-" + shift);
+
+		// ALL-DAY shift or four-continuous-shifts not allowed!!
+		if (scheduledShifts.containsKey(date) || !checkContinuity(date))
 			return false;
 
 		scheduledShifts.put(date, shift);
 		scheduledDays++;
+		return true;
+	}
+
+	private boolean checkContinuity(int date) {
+		int count = 0;
+		for (int i = date >= 3 ? date - 3 : 0; i < date; i++) {
+			count += scheduledShifts.containsKey(i) ? 1 : 0;
+		}
+		if (count == 3)
+			return false;
+
+		for (int i = date + 1; i < date + 4; i++) {
+			count -= scheduledShifts.containsKey(i - 4) ? 1 : 0;
+			count += scheduledShifts.containsKey(i) ? 1 : 0;
+			if (count == 3)
+				return false;
+		}
+
 		return true;
 	}
 
@@ -55,8 +81,7 @@ public class Member implements Comparable<Member> {
 		for (int i = 0; i < days; i++) {
 			sb.append(scheduledShifts.getOrDefault(i, ' ') + ",");
 		}
-		sb.append(requestedDays + ",");
-		sb.append("\n");
+		sb.append(requestedDays + "\n");
 
 		return sb.toString();
 	}
@@ -69,9 +94,11 @@ public class Member implements Comparable<Member> {
 	}
 
 	public int compareTo(Member other) {
-		if (this.requestedDays < 6 && other.requestedDays >= 6)
+		if (this.scheduledDays > maxDays)
+			return 3;
+		if (this.requestedDays < minDays && other.requestedDays >= minDays)
 			return -2; // higher priority
-		else if (this.requestedDays >= 6 && other.requestedDays <= 6)
+		else if (this.requestedDays >= minDays && other.requestedDays <= minDays)
 			return 2;
 		return this.scheduledDays / this.requestedDays - other.scheduledDays - other.requestedDays;
 	}
