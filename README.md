@@ -2,10 +2,10 @@
 
 ## Input Format
 - csv file
-- 含時間, email, 編號＋姓名, \[request\]
-- 例：2020/01/01  15:30:47, abc@gmail.com, 01 外旅太郎, \[ABD, O, CD,...\]
-- 註：不希望時 "-"; 全天都可 "O"
-- 以姓名分類，若有多個request則使用時間較晚的
+- format: time, email, number+name, \[request\]
+- example：2020/01/01 15:30:47, abc@gmail.com, 01 外旅太郎, \[ABD, O, CD,...\]
+- notation：不希望時 "-"; 全天都可 "O"
+- basically sorted by **name**, when multiple requested with the same name received, will overwrite with that with latest timestamp
 
 ## Rules
 1. 日期安排順序：希望者數較少的先
