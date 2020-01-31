@@ -36,16 +36,15 @@ public class App {
 		}
 	}
 
-	public static void inputShiftRequest() {
+	public static void inputShiftRequest(String inputfile) {
 
 		for (Member member : employees.values())
 			member.reset();
 
-		String csvFile = "shift_requestcopy.csv";
 		BufferedReader br = null;
 		try {
 
-			br = new BufferedReader(new FileReader(csvFile));
+			br = new BufferedReader(new FileReader(inputfile));
 			String line = br.readLine();
 			headline = line;
 			days = headline.split(",").length - 3;
@@ -68,7 +67,7 @@ public class App {
 //				int no = Integer.parseInt(info[0].substring(0, 2).replaceAll("\\uFEFF", ""));
 //				String name = info[0].substring(2, info[0].length()).trim();
 				if (!employees.containsKey(no))
-					throw new IllegalArgumentException("まだ登録されてないメンバーです: no." + no);
+					throw new IllegalArgumentException("まだ登録されてないメンバーです: no." + no + " " + name);
 
 				int count = 0;
 				for (int i = 1; i < info.length; i++) {
@@ -76,7 +75,7 @@ public class App {
 					availability[i - 1] = request;
 					if (!request.equals("-"))
 						count++;
-					if (request.equals("O"))
+					if (request.contains("O"))
 						request = "ABHCD";
 					timetable.input(i - 1, request, no, employees.get(no).chineseStaff);
 				}
@@ -100,12 +99,12 @@ public class App {
 		}
 	}
 
-	public static void inputMemberInfo() {
-		String csvFile = "member.csv";
+	public static void inputMemberInfo(String memberfile) {
+
 		BufferedReader br = null;
 		try {
 
-			br = new BufferedReader(new FileReader(csvFile));
+			br = new BufferedReader(new FileReader(memberfile));
 			String line = "";
 			while ((line = br.readLine()) != null) {
 				String[] info = line.split(",");
@@ -439,20 +438,20 @@ public class App {
 	public static void main(String[] args) {
 
 		System.out.println("member.csv から名簿を入力します。");
-		inputMemberInfo();
+		inputMemberInfo("member.csv");
 
 		System.out.println("shift_request.csv からシフト希望を入力します。");
-		inputShiftRequest();
+		inputShiftRequest("shift_request_march.csv");
 
 		vacancy = new HashMap<>();
 		// (min) A:1, H:2, B:5, C:2, D:4
 		vacancy.put("A", 1);
-		vacancy.put("B", 4);
-		vacancy.put("H", 4);
+		vacancy.put("B", 3);
+		vacancy.put("H", 3);
 		vacancy.put("C", 2);
-		vacancy.put("D", 4);
-		vacancy.put("morning", 9); // 1+4+4 or 1+5+3
-		vacancy.put("afternoon", 6); // 2+4 or 3+3
+		vacancy.put("D", 3);
+		vacancy.put("morning", 7);
+		vacancy.put("afternoon", 5);
 		vacancy.put("chinese", 2);
 
 		PriorityQueue<Availability> pq = new PriorityQueue<>();
