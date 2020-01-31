@@ -81,7 +81,11 @@ public class Member implements Comparable<Member> {
 		for (int i = 0; i < days; i++) {
 			sb.append(scheduledShifts.getOrDefault(i, ' ') + ",");
 		}
-		sb.append(requestedDays + "\n");
+		sb.append(scheduledDays + ",");
+		sb.append(requestedDays + ",");
+
+		double ratio = requestedDays == 0 ? 0 : (double) scheduledDays / requestedDays * 100;
+		sb.append(String.format("%.2f\n", ratio));
 
 		return sb.toString();
 	}
@@ -96,11 +100,15 @@ public class Member implements Comparable<Member> {
 	public int compareTo(Member other) {
 		if (this.scheduledDays > maxDays)
 			return 3;
-		if (this.requestedDays < minDays && other.requestedDays >= minDays)
-			return -2; // higher priority
-		else if (this.requestedDays >= minDays && other.requestedDays <= minDays)
+		if (this.requestedDays >= minDays && other.requestedDays < minDays)
 			return 2;
-		return this.scheduledDays / this.requestedDays - other.scheduledDays - other.requestedDays;
+		else if (this.requestedDays < minDays && other.requestedDays >= minDays)
+			return -2; // higher priority
+
+		if (this.scheduledDays > 8 && other.scheduledDays > 8)
+			return this.scheduledDays / this.requestedDays - other.scheduledDays / other.requestedDays;
+
+		return this.scheduledDays - other.scheduledDays;
 	}
 
 //	private Language valueOf(String value) {
