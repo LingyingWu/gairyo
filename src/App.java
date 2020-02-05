@@ -159,8 +159,8 @@ public class App {
 
 		int cand_morning = timetable.getAvailability(date).num_morning;
 		int cand_afternoon = timetable.getAvailability(date).num_afternoon;
-		int vac_morning = vacancy.get("morning");
-		int vac_afternoon = vacancy.get("afternoon");
+		int vac_morning = vacancy.get("morning") - vacancy.get("chinese");
+		int vac_afternoon = vacancy.get("afternoon") - vacancy.get("chinese");
 
 		// Morning
 		List<Integer> cand_a = timetable.getAvailabilityOf(date, 'A');
@@ -169,10 +169,109 @@ public class App {
 		int vac_b = vacancy.get("B");
 		int vac_h = vacancy.get("H");
 
-		// 希望者不足
+		List<Integer> cand_c = timetable.getAvailabilityOf(date, 'C');
+		List<Integer> cand_d = timetable.getAvailabilityOf(date, 'D');
+		int vac_c = vacancy.get("C");
+		int vac_d = vacancy.get("D");
+
+		// Chinese Staff (2 ppl)
+		List<Integer> chinese_staff = new ArrayList<>();
+		PriorityQueue<Member> pq_ch = new PriorityQueue<>();
+		for (int no : cand_b) {
+			if (employees.get(no).chineseStaff)
+				chinese_staff.add(no);
+		}
+		for (int no : cand_h) {
+			if (employees.get(no).chineseStaff && !chinese_staff.contains(Integer.valueOf(no)))
+				chinese_staff.add(no);
+		}
+		for (int no : chinese_staff) pq_ch.add(employees.get(no));
+
+		for (int i = 0; i < vacancy.get("chinese") && !pq_ch.isEmpty();) {
+			int no = pq_ch.remove().no;
+			cand_b.remove(Integer.valueOf(no));
+			cand_h.remove(Integer.valueOf(no));
+
+			String availability = employees.get(no).getAvailability(date);
+			if (availability.indexOf('B') < 0 && availability.indexOf('H') < 0)
+				continue;
+
+			if (availability.length() >= 2) {
+				if (vac_h > vac_b) {
+					boolean done = employees.get(no).schedule(date, 'H');
+					vac_h -= done ? 1 : 0;
+					i += done ? 1 : 0;
+				} else {
+					boolean done = employees.get(no).schedule(date, 'B');
+					vac_b -= done ? 1 : 0;
+					i += done ? 1 : 0;
+				}
+
+			} else if (availability.length() == 1) {
+				if (availability.charAt(0) == 'H') {
+					boolean done = employees.get(no).schedule(date, 'H');
+					vac_h -= done ? 1 : 0;
+					i += done ? 1 : 0;
+				} else {
+					boolean done = employees.get(no).schedule(date, 'B');
+					vac_b -= done ? 1 : 0;
+					i += done ? 1 : 0;
+				}
+			} else
+				throw new IllegalArgumentException("Error occurs when arranging chinese staff. " + date);
+		}
+
+		// Chinese Staff (2 ppl)
+		chinese_staff.clear();
+		pq_ch.clear();
+		for (int no : cand_c) {
+			if (employees.get(no).chineseStaff)
+				chinese_staff.add(no);
+		}
+		for (int no : cand_d) {
+			if (employees.get(no).chineseStaff && !chinese_staff.contains(Integer.valueOf(no)))
+				chinese_staff.add(no);
+		}
+		for (int no : chinese_staff) pq_ch.add(employees.get(no));
+
+		for (int i = 0; i < vacancy.get("chinese") && !pq_ch.isEmpty();) {
+			int no = pq_ch.remove().no;
+			cand_c.remove(Integer.valueOf(no));
+			cand_d.remove(Integer.valueOf(no));
+
+			String availability = employees.get(no).getAvailability(date);
+			if (availability.indexOf('C') < 0 && availability.indexOf('D') < 0)
+				continue;
+
+			if (availability.length() >= 2) {
+				if (vac_c > vac_d) {
+					boolean done = employees.get(no).schedule(date, 'C');
+					vac_c -= done ? 1 : 0;
+					i += done ? 1 : 0;
+				} else {
+					boolean done = employees.get(no).schedule(date, 'D');
+					vac_d -= done ? 1 : 0;
+					i += done ? 1 : 0;
+				}
+
+			} else if (availability.length() == 1) {
+				if (availability.charAt(0) == 'C') {
+					boolean done = employees.get(no).schedule(date, 'C');
+					vac_c -= done ? 1 : 0;
+					i += done ? 1 : 0;
+				} else {
+					boolean done = employees.get(no).schedule(date, 'D');
+					vac_d -= done ? 1 : 0;
+					i += done ? 1 : 0;
+				}
+			} else
+				throw new IllegalArgumentException("Error occurs when arranging chinese staff. " + date);
+		}
+
+		// 希望人数 < 定員
 		if (cand_morning <= vac_morning) {
 			if (cand_h.size() <= vacancy.get("H")) {
-				System.out.println("h <= 4");
+				System.out.println("h <= " + vacancy.get("H"));
 				for (int no : cand_h) {
 					boolean done = employees.get(no).schedule(date, 'H');
 					vac_morning -= done ? 1 : 0;
@@ -185,7 +284,7 @@ public class App {
 					vac_b -= done ? 1 : 0;
 				}
 			} else if (cand_b.size() < vacancy.get("B")) {
-				System.out.println("b <= 4");
+				System.out.println("b <= " + vacancy.get("B"));
 				for (int no : cand_b) {
 					boolean done = employees.get(no).schedule(date, 'B');
 					vac_morning -= done ? 1 : 0;
@@ -209,54 +308,6 @@ public class App {
 				cand_b.remove(Integer.valueOf(no));
 				cand_h.remove(Integer.valueOf(no));
 			}
-		}
-
-		// Chinese Staff (2 ppl)
-		List<Integer> chinese_staff = new ArrayList<>();
-		for (int no : cand_b) {
-			if (employees.get(no).chineseStaff)
-				chinese_staff.add(no);
-		}
-		for (int no : cand_h) {
-			if (employees.get(no).chineseStaff && !chinese_staff.contains(Integer.valueOf(no)))
-				chinese_staff.add(no);
-		}
-		for (int i = 0; i < vacancy.get("chinese") && chinese_staff.size() > 0;) {
-			int no = getRandomNum(chinese_staff);
-			cand_b.remove(Integer.valueOf(no));
-			cand_h.remove(Integer.valueOf(no));
-
-			String availability = employees.get(no).getAvailability(date);
-			if (availability.indexOf('B') < 0 && availability.indexOf('H') < 0)
-				continue;
-
-			if (availability.length() >= 2) {
-				if (vac_h > vac_b) {
-					boolean done = employees.get(no).schedule(date, 'H');
-					vac_morning -= done ? 1 : 0;
-					vac_h -= done ? 1 : 0;
-					i += done ? 1 : 0;
-				} else {
-					boolean done = employees.get(no).schedule(date, 'B');
-					vac_morning -= done ? 1 : 0;
-					vac_b -= done ? 1 : 0;
-					i += done ? 1 : 0;
-				}
-
-			} else if (availability.length() == 1) {
-				if (availability.charAt(0) == 'H') {
-					boolean done = employees.get(no).schedule(date, 'H');
-					vac_morning -= done ? 1 : 0;
-					vac_h -= done ? 1 : 0;
-					i += done ? 1 : 0;
-				} else {
-					boolean done = employees.get(no).schedule(date, 'B');
-					vac_morning -= done ? 1 : 0;
-					vac_b -= done ? 1 : 0;
-					i += done ? 1 : 0;
-				}
-			} else
-				throw new IllegalArgumentException("Error occurs when arranging chinese staff. " + date);
 		}
 
 		PriorityQueue<Member> pqb = new PriorityQueue<>();
@@ -316,15 +367,10 @@ public class App {
 		pqb.clear();
 
 		// Afternoon
-		List<Integer> cand_c = timetable.getAvailabilityOf(date, 'C');
-		List<Integer> cand_d = timetable.getAvailabilityOf(date, 'D');
-		int vac_c = vacancy.get("C");
-		int vac_d = vacancy.get("D");
-
+		// 希望人数 < 定員
 		if (cand_afternoon <= vac_afternoon) {
-			// 希望人数 < 定員
 			if (cand_c.size() <= vacancy.get("C")) {
-				System.out.println("c <= 2");
+				System.out.println("c <= " + vacancy.get("C"));
 				for (int no : cand_c) {
 					boolean done = employees.get(no).schedule(date, 'C');
 					vac_afternoon -= done ? 1 : 0;
@@ -337,7 +383,7 @@ public class App {
 					vac_d -= done ? 1 : 0;
 				}
 			} else if (cand_d.size() <= vacancy.get("D")) {
-				System.out.println("d <= 4");
+				System.out.println("d <= " + vacancy.get("D"));
 				for (int no : cand_d) {
 					boolean done = employees.get(no).schedule(date, 'D');
 					vac_afternoon -= done ? 1 : 0;
@@ -350,54 +396,6 @@ public class App {
 					vac_c -= done ? 1 : 0;
 				}
 			}
-		}
-
-		// Chinese Staff (2 ppl)
-		chinese_staff.clear();
-		for (int no : cand_c) {
-			if (employees.get(no).chineseStaff)
-				chinese_staff.add(no);
-		}
-		for (int no : cand_d) {
-			if (employees.get(no).chineseStaff && !chinese_staff.contains(Integer.valueOf(no)))
-				chinese_staff.add(no);
-		}
-		for (int i = 0; i < vacancy.get("chinese") && chinese_staff.size() > 0;) {
-			int no = getRandomNum(chinese_staff);
-			cand_c.remove(Integer.valueOf(no));
-			cand_d.remove(Integer.valueOf(no));
-
-			String availability = employees.get(no).getAvailability(date);
-			if (availability.indexOf('C') < 0 && availability.indexOf('D') < 0)
-				continue;
-
-			if (availability.length() >= 2) {
-				if (vac_c > vac_d) {
-					boolean done = employees.get(no).schedule(date, 'C');
-					vac_afternoon -= done ? 1 : 0;
-					vac_c -= done ? 1 : 0;
-					i += done ? 1 : 0;
-				} else {
-					boolean done = employees.get(no).schedule(date, 'D');
-					vac_afternoon -= done ? 1 : 0;
-					vac_d -= done ? 1 : 0;
-					i += done ? 1 : 0;
-				}
-
-			} else if (availability.length() == 1) {
-				if (availability.charAt(0) == 'C') {
-					boolean done = employees.get(no).schedule(date, 'C');
-					vac_afternoon -= done ? 1 : 0;
-					vac_c -= done ? 1 : 0;
-					i += done ? 1 : 0;
-				} else {
-					boolean done = employees.get(no).schedule(date, 'D');
-					vac_afternoon -= done ? 1 : 0;
-					vac_d -= done ? 1 : 0;
-					i += done ? 1 : 0;
-				}
-			} else
-				throw new IllegalArgumentException("Error occurs when arranging chinese staff. " + date);
 		}
 
 		PriorityQueue<Member> pqc = new PriorityQueue<>();
@@ -444,14 +442,14 @@ public class App {
 		inputShiftRequest("shift_request_march.csv");
 
 		vacancy = new HashMap<>();
-		// (min) A:1, H:2, B:5, C:2, D:4
+		// (min) A:1, H:2, H:3, C:2, D:2
 		vacancy.put("A", 1);
-		vacancy.put("B", 3);
+		vacancy.put("B", 2);
 		vacancy.put("H", 3);
 		vacancy.put("C", 2);
-		vacancy.put("D", 3);
-		vacancy.put("morning", 7);
-		vacancy.put("afternoon", 5);
+		vacancy.put("D", 2);
+		vacancy.put("morning", 6);
+		vacancy.put("afternoon", 4);
 		vacancy.put("chinese", 2);
 
 		PriorityQueue<Availability> pq = new PriorityQueue<>();

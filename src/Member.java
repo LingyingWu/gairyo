@@ -99,13 +99,14 @@ public class Member implements Comparable<Member> {
 
 	public int compareTo(Member other) {
 		if (this.scheduledDays > maxDays)
-			return 3;
+			return 3; // lowest priority
+
 		if (this.requestedDays >= minDays && other.requestedDays < minDays)
-			return 2;
+			return 2; // lower priority
 		else if (this.requestedDays < minDays && other.requestedDays >= minDays)
 			return -2; // higher priority
 
-		if (this.scheduledDays > 8 && other.scheduledDays > 8)
+		if (this.scheduledDays > 6 && other.scheduledDays > 6)
 			return this.scheduledDays / this.requestedDays - other.scheduledDays / other.requestedDays;
 
 		return this.scheduledDays - other.scheduledDays;
